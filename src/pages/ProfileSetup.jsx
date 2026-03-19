@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -83,7 +83,35 @@ export default function ProfileSetup() {
     setSaving(false);
   };
 
-  const programs = college ? (PROGRAMS_BY_COLLEGE[college] || []) : [];
+  const STAFF_POSITIONS = [
+  "Librarian",
+  "Administrative Staff",
+  "Security Guard",
+  "Maintenance Staff",
+  "IT Staff",
+  "Registrar Staff",
+  "Accounting Staff",
+  "Guidance Staff",
+  "Laboratory Staff",
+  "Other Staff",
+];
+
+const FACULTY_POSITIONS = [
+  "Instructor",
+  "Assistant Professor",
+  "Associate Professor",
+  "Full Professor",
+  "Dean",
+  "Department Chair",
+  "Program Head",
+  "Part-time Instructor",
+];
+
+const programs = type === "staff"
+  ? STAFF_POSITIONS
+  : type === "faculty"
+  ? college ? FACULTY_POSITIONS : []
+  : college ? (PROGRAMS_BY_COLLEGE[college] || []) : [];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

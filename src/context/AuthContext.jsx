@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db, googleProvider } from "../firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { ADMIN_EMAILS } from "./authConstants";
-import { AuthContext } from "./authContext.js";
 
-export function AuthProvider({ children }) { 
+const AuthContext = createContext();
+export const useAuth = () => useContext(AuthContext);
+
+const ADMIN_EMAILS = [
+  "jcesperanza@neu.edu.ph",
+  "dajandrei.bernardino@neu.edu.ph"
+];
+
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,10 +34,9 @@ export function AuthProvider({ children }) {
         createdAt: serverTimestamp(),
       });
     } else {
-       await setDoc(ref, { role: role }, { merge: true });
-  }
+      await setDoc(ref, { role: role }, { merge: true });
+    }
 
-    // Set active role on login
     setActiveRole(role);
     return result;
   };
@@ -43,7 +48,6 @@ export function AuthProvider({ children }) {
     setActiveRole("student");
   };
 
-  // Switch between admin and visitor mode
   const switchToAdmin = () => setActiveRole("admin");
   const switchToVisitor = () => setActiveRole("student");
 
@@ -56,8 +60,8 @@ export function AuthProvider({ children }) {
           const profile = snap.data();
           setUser(u);
           setUserProfile(profile);
-          setActiveRole(profile.role); // ← add this line
-          } else {
+          setActiveRole(profile.role);
+        } else {
           setUser(u);
           setUserProfile({ role: "student" });
           setActiveRole("student");
@@ -77,8 +81,8 @@ export function AuthProvider({ children }) {
       user,
       userProfile,
       activeRole,
-      switchToAdmin,   // ✅ switch to admin mode
-      switchToVisitor, // ✅ switch to visitor mode
+      switchToAdmin,
+      switchToVisitor,
       signInWithGoogle,
       logout,
       loading

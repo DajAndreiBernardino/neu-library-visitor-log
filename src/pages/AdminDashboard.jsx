@@ -51,7 +51,13 @@ export default function AdminDashboard() {
     }
     if (filterReason && v.reason !== filterReason) return false;
     if (filterCollege && v.college !== filterCollege) return false;
-    if (filterType && v.type !== filterType) return false;
+    if (filterType) {
+     if (filterType === "employee") {
+      if (v.type !== "faculty" && v.type !== "staff") return false;
+    } else {
+      if (v.type !== filterType) return false;
+  }
+}
     if (search) {
       const q = search.toLowerCase();
       if (!v.name?.toLowerCase().includes(q) && !v.program?.toLowerCase().includes(q) && !v.reason?.toLowerCase().includes(q)) return false;
@@ -233,9 +239,10 @@ const colleges = [...new Set([
             <select value={filterType} onChange={e => setFilterType(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-600">
               <option value="">All Types</option>
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-              <option value="staff">Staff</option>
+              <option value="student">🎓 Student</option>
+              <option value="faculty">👨‍🏫 Faculty (Employee)</option>
+              <option value="staff">💼 Staff (Employee)</option>
+              <option value="employee">👔 All Employees</option>
             </select>
           </div>
         </div>
