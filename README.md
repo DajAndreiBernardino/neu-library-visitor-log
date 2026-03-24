@@ -1,16 +1,114 @@
-# React + Vite
+# 📚 NEU Library Visitor Log
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A digital visitor log system for the **New Era University Library**, built with React + Firebase. Supports Google OAuth login, RFID kiosk check-in, admin dashboard, and Excel export.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌐 Live Demo
 
-## React Compiler
+[https://neu-library-cpl7.vercel.app](https://neu-library-cpl7.vercel.app)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## ✨ Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🔐 **Google Sign-In** — restricted to `@neu.edu.ph` accounts
+- 📟 **RFID Kiosk Mode** — standalone check-in page at `/kiosk`, no Google login needed
+- 📋 **Visitor Check-In** — select purpose of visit, logs saved to Firestore
+- 🛡️ **Admin Dashboard** — view all visit logs with filters (date, reason, college, type)
+- 👥 **User Management** — block/unblock users from the admin panel
+- 📊 **Export to Excel** — download filtered visit logs as `.xlsx`
+- 🚫 **Block System** — blocked users are restricted from checking in
+
+---
+
+## 🗂️ Project Structure
+
+```
+src/
+├── firebase.js                  # Firebase config & exports
+├── App.jsx                      # Routes & guards
+├── context/
+│   └── AuthContext.jsx          # Auth state, Google sign-in, role logic
+├── components/
+│   └── Navbar.jsx               # Top navigation bar
+└── pages/
+    ├── Login.jsx                # Google + RFID login page
+    ├── ProfileSetup.jsx         # First-time user registration
+    ├── Welcome.jsx              # Visitor check-in (purpose selection)
+    ├── AdminDashboard.jsx       # Admin panel (logs, users, export)
+    └── Kiosk.jsx                # RFID-only kiosk page
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Firebase project with Firestore + Google Auth enabled
+
+### Installation
+
+```bash
+git clone https://github.com/DajAndreiBernardino/neu-library-visitor-log.git
+cd neu-library-visitor-log
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+### Run locally
+
+```bash
+npm run dev
+```
+
+---
+
+## 🔥 Firestore Collections
+
+| Collection | Purpose |
+|---|---|
+| `users` | Registered user profiles |
+| `visits` | Visit log entries |
+| `blocklist` | Blocked user IDs |
+| `adminEmails` | Emails with admin access (document ID = email) |
+
+### Adding an Admin
+
+In Firestore, create a document under `adminEmails` with the email as the document ID:
+
+```
+adminEmails/
+  └── youremail@neu.edu.ph
+        active: true
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- [Firebase](https://firebase.google.com/) (Auth + Firestore)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [React Router](https://reactrouter.com/)
+- [date-fns](https://date-fns.org/)
+- [xlsx](https://sheetjs.com/)
+
+---
+
+## 📄 License
+
+For academic use — New Era University, CICS.
