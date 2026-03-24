@@ -1,145 +1,117 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Login() {
   const { signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
-  const [rfid, setRfid] = useState("");
-  const [rfidError, setRfidError] = useState("");
-  const [rfidLoading, setRfidLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("google");
+  const [time, setTime] = useState(new Date());
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (user) navigate("/welcome"); }, [user, navigate]);
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (user) navigate("/welcome");
+  }, [user]);
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
     try {
       const result = await signInWithGoogle();
-      const { getFirestore, doc, getDoc } = await import("firebase/firestore");
-      const db = getFirestore();
-      const ref = doc(db, "users", result.user.uid);
-      const snap = await getDoc(ref);
-      const data = snap.exists() ? snap.data() : {};
+      const u = result.user;
+      const snap = await getDoc(doc(db, "users", u.uid));
+      const data = snap.exists() ? snap.data() : null;
       if (!data?.program) {
         navigate("/profile-setup");
         return;
       }
-      if (data?.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/welcome");
-      }
+      data.role === "admin" ? navigate("/admin") : navigate("/welcome");
     } catch (err) {
-      alert("Login failed: " + err.message);
-    }
-  };
-
-  const handleRFID = async () => {
-    if (!rfid.trim()) return setRfidError("Please enter or scan your RFID number.");
-    setRfidLoading(true);
-    setRfidError("");
-    try {
-      const q = query(collection(db, "users"), where("rfid", "==", rfid.trim()));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        setRfidError("RFID not found. Please use Google login or contact the librarian.");
-        setRfidLoading(false);
-        return;
+      if (
+        err.code !== "auth/cancelled-popup-request" &&
+        err.code !== "auth/popup-closed-by-user"
+      ) {
+        alert("Login failed: " + err.message);
       }
-      const userData = snap.docs[0].data();
-      sessionStorage.setItem("rfidUser", JSON.stringify(userData));
-      navigate("/welcome");
-    } catch (err) {
-      setRfidError("Error: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    setRfidLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
-      {/* White navbar */}
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
+      {/* Navbar */}
       <div className="bg-white shadow-sm px-6 py-3 flex items-center gap-3 border-b border-gray-200">
-        <div className="w-11 h-11 rounded-full border-2 border-yellow-400 bg-yellow-50 flex items-center justify-center shadow">
-          <span className="text-xs font-black text-blue-900">NEU</span>
+        <div
+          className="w-11 h-11 rounded-full border-2 border-yellow-400 bg-yellow-50 flex items-center justify-center shadow font-black text-xs"
+          style={{ color: "#1a237e" }}
+        >
+          NEU
         </div>
-        <h1 className="text-lg font-bold" style={{ color: '#1a237e' }}>New Era University</h1>
+        <p className="text-lg font-bold" style={{ color: "#1a237e" }}>
+          New Era University
+        </p>
+        <div className="ml-auto text-right">
+          <p className="text-xs text-gray-400">
+            {time.toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </p>
+          <p className="text-sm font-bold" style={{ color: "#1a237e" }}>
+            {time.toLocaleTimeString("en-PH")}
+          </p>
+        </div>
       </div>
 
-      {/* Main content */}
+      {/* Card */}
       <div className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="bg-white rounded-xl shadow-md w-full max-w-md overflow-hidden border border-gray-100">
-          <div className="h-2 w-full" style={{ backgroundColor: '#f0a500' }}></div>
-          <div className="px-8 pt-7 pb-5 text-center border-b border-gray-100">
-            <div className="w-16 h-16 rounded-full border-4 border-yellow-400 bg-yellow-50 flex items-center justify-center mx-auto mb-3 shadow font-black text-blue-900 text-base">
+          <div className="h-2 w-full" style={{ backgroundColor: "#f0a500" }} />
+
+          <div className="px-8 pt-7 pb-5 text-center">
+            <div
+              className="w-16 h-16 rounded-full border-4 border-yellow-400 bg-yellow-50 flex items-center justify-center mx-auto mb-4 shadow font-black text-lg"
+              style={{ color: "#1a237e" }}
+            >
               NEU
             </div>
-            <h2 className="text-lg font-bold text-gray-800">Library Visitor Log</h2>
-            <p className="text-gray-400 text-xs mt-1">Sign in to log your visit</p>
+            <h2 className="text-xl font-bold mb-1" style={{ color: "#1a237e" }}>
+              Library Visitor Log
+            </h2>
+            <p className="text-gray-400 text-sm">Sign in with your NEU account to continue</p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200">
-            <button onClick={() => setActiveTab("google")}
-              className={`flex-1 py-3 text-sm font-medium transition-all ${activeTab === "google" ? "border-b-2" : "text-gray-400"}`}
-              style={activeTab === "google" ? { borderBottomColor: '#00b4d8', color: '#1a237e' } : {}}>
-              📧 Google Login
+          <div className="px-8 pb-8 space-y-3">
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition font-medium text-gray-700 shadow-sm disabled:opacity-60"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              {loading ? "Signing in..." : "Continue with Google"}
             </button>
-            <button onClick={() => setActiveTab("rfid")}
-              className={`flex-1 py-3 text-sm font-medium transition-all ${activeTab === "rfid" ? "border-b-2" : "text-gray-400"}`}
-              style={activeTab === "rfid" ? { borderBottomColor: '#00b4d8', color: '#1a237e' } : {}}>
-              💳 RFID Login
-            </button>
-          </div>
 
-          <div className="px-8 py-7">
-            {activeTab === "google" ? (
-              <>
-                <p className="text-center text-gray-500 text-sm mb-5">Use your NEU institutional email to sign in</p>
-                <button onClick={handleGoogleLogin}
-                  className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-cyan-400 text-gray-700 font-semibold py-3 px-6 rounded-full transition-all shadow-sm hover:shadow-md">
-                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                  Sign in with Google
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-center text-gray-500 text-sm mb-5">Scan your ID card or enter your student/employee number</p>
-                <input
-                  type="text"
-                  value={rfid}
-                  onChange={e => setRfid(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleRFID()}
-                  placeholder="e.g. 23-11472-452"
-                  autoFocus
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none transition-all mb-3"
-                />
-                {rfidError && <p className="text-red-500 text-xs mb-3 text-center">{rfidError}</p>}
-                <button onClick={handleRFID} disabled={rfidLoading}
-                  className="w-full text-white font-bold py-3 rounded-full transition-all disabled:opacity-60 shadow"
-                  style={{ backgroundColor: '#00b4d8' }}>
-                  {rfidLoading ? "Looking up..." : "Log In with RFID"}
-                </button>
-                <p className="text-xs text-center text-gray-400 mt-4">
-                  Not registered? Contact the librarian.
-                </p>
-              </>
-            )}
-          </div>
+            <p className="text-center text-xs text-gray-400 pt-2">
+              Use your <span className="font-semibold">@neu.edu.ph</span> account
+            </p>
 
-          <div className="px-8 py-3 bg-gray-50 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400">© 2026 New Era University Library. All rights reserved.</p>
+            <div className="border-t border-gray-100 pt-4 text-center">
+              <a
+                href="/kiosk"
+                className="text-xs text-gray-400 hover:text-cyan-500 transition"
+              >
+                📟 RFID Kiosk Mode →
+              </a>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-6 py-4" style={{ backgroundColor: '#111827' }}>
-        <div className="flex items-center gap-6 text-xs text-gray-400">
-          <span>📍 9 Central Ave, New Era, Quezon City</span>
-          <span>✉️ info@neu.edu.ph</span>
-          <span>📞 (02) 8981 4221</span>
         </div>
       </div>
     </div>

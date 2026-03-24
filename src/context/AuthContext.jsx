@@ -6,11 +6,6 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-const ADMIN_EMAILS = [
-  "jcesperanza@neu.edu.ph",
-  "dajandrei.bernardino@neu.edu.ph"
-];
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -22,7 +17,10 @@ export function AuthProvider({ children }) {
     const u = result.user;
     const ref = doc(db, "users", u.uid);
     const snap = await getDoc(ref);
-    const role = ADMIN_EMAILS.includes(u.email) ? "admin" : "student";
+
+    // Check Firestore adminEmails collection
+    const adminSnap = await getDoc(doc(db, "adminEmails", u.email));
+    const isAdmin = adminSnap.exists();
 
     if (!snap.exists()) {
       await setDoc(ref, {
@@ -30,13 +28,15 @@ export function AuthProvider({ children }) {
         email: u.email,
         name: u.displayName,
         photoURL: u.photoURL,
-        role: role,
+        role: isAdmin ? "admin" : "student",
         createdAt: serverTimestamp(),
       });
     } else {
-      await setDoc(ref, { role: role }, { merge: true });
+      if (isAdmin) await setDoc(ref, { role: "admin" }, { merge: true });
     }
 
+    const updated = await getDoc(ref);
+    const role = updated.data()?.role || "student";
     setActiveRole(role);
     return result;
   };
@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
           const profile = snap.data();
           setUser(u);
           setUserProfile(profile);
-          setActiveRole(profile.role);
+          setActiveRole(profile.role || "student");
         } else {
           setUser(u);
           setUserProfile({ role: "student" });
@@ -77,17 +77,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      userProfile,
-      activeRole,
-      switchToAdmin,
-      switchToVisitor,
-      signInWithGoogle,
-      logout,
-      loading
-    }}>
-      {!loading && children}
+    <AuthContext.Provider
+      value={{ user, userProfile, loading, activeRole, signInWithGoogle, logout, switchToAdmin, switchToVisitor }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 }
