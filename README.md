@@ -6,7 +6,7 @@ A digital visitor log system for the **New Era University Library**, built with 
 
 ## 🌐 Live Demo
 
-[https://neu-lib-visitor-6b1qvt514-dajandreibernardinos-projects.vercel.app]
+https://neu-lib-visitor-log.vercel.app
 
 ---
 
